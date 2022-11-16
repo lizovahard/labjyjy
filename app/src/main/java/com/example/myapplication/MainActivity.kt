@@ -1,72 +1,71 @@
 package com.example.myapplication
 
 import android.annotation.SuppressLint
+import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
+import android.database.Cursor
+import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteOpenHelper
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+
+data class Todo(val id: Long, val name: String, val lastname: String, val birthday: String, val tel: String, val isDone: Boolean)
+
+
+
 
 class MainActivity : AppCompatActivity() {
 
+    private val dbHelper = DBHelper(this)
+    private val list = mutableListOf<Todo>()
+    private lateinit var adapter: RecyclerAdapter
 
-
-
-    val EDIT_TEXT_KEY = "EDIT_TEXT_KEY"
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        val editText = findViewById<TextView>(R.id.tv)
-        outState.putString(EDIT_TEXT_KEY, editText.text.toString())
-        super.onSaveInstanceState(outState)
-    }
-
-
-    companion object {
-        const val EXTRA_KEY = "EXTRA"
-    }
     override fun onCreate(savedInstanceState: Bundle?) {
-
+        list.addAll(dbHelper.getAll())
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val button = findViewById<Button>(R.id.button5)
-        button.setOnClickListener {
-            val intent = Intent(this, MainActivity2::class.java)
+        val listSTR = list.map { todo: Todo -> todo.id }
+        adapter = RecyclerAdapter(list) {
+            // адаптеру передали обработчик удаления элемента
+            dbHelper.remove(it)
+            list.removeAt(it)
+            adapter.notifyItemRemoved(it)
+        }
 
-            intent.putExtra(EXTRA_KEY, "1")
-            startActivity(intent)
-        }
-        val button2 = findViewById<Button>(R.id.button6)
-        button2.setOnClickListener {
-            val intent = Intent(this, MainActivity2::class.java)
 
-            intent.putExtra(EXTRA_KEY, "2")
-            startActivity(intent)
-        }
-        val button3 = findViewById<Button>(R.id.button7)
-        button3.setOnClickListener {
-            val intent = Intent(this, MainActivity2::class.java)
 
-            intent.putExtra(EXTRA_KEY, "3")
-            startActivity(intent)
-        }
-        if (savedInstanceState != null) {
-            val editText = findViewById<TextView>(R.id.tv)
-            editText.text = (savedInstanceState.getString(EDIT_TEXT_KEY))
-        }
-        val minn = findViewById<Button>(R.id.but_min)
-        val tev = findViewById<TextView>(R.id.tv)
-        val pl = findViewById<Button>(R.id.but_pl)
+        val editText = findViewById<EditText>(R.id.editTextTextPersonName)
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = adapter
 
-        pl.setOnClickListener {
-            tev.text =   (tev.text.toString().toInt() + 1).toString()
+        val buttonAdd = findViewById<Button>(R.id.but_pl)
+        buttonAdd.setOnClickListener {
+            val id = dbHelper.add(editText.text.toString(), "89132490223", "14.09.2003", "petrov" )
+            list.add(Todo(id, editText.text.toString(), "petrov", "14.09.2003", "89132490223", true))
+            adapter.notifyItemInserted(list.lastIndex)
+
         }
-        minn.setOnClickListener {
-            tev.text =   (tev.text.toString().toInt() - 1).toString()
-        }
+
+
+//        val button = findViewById<Button>(R.id.but_pl)
+//        val textView = findViewById<RecyclerView>(R.id.recyclerView)
+//
+//
+//        button.setOnClickListener {
+//
+//        }
 
         }
 
