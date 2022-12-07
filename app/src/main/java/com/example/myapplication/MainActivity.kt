@@ -1,27 +1,26 @@
 package com.example.myapplication
 
-import android.annotation.SuppressLint
-import android.content.ContentValues
-import android.content.Context
 import android.content.Intent
-import android.database.Cursor
-import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteOpenHelper
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import androidx.core.widget.doOnTextChanged
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-data class Todo(val id: Long, val name: String, val lastname: String, val birthday: String, val tel: String, val isDone: Boolean)
-
-
+data class Todo(
+    val id: Long,
+    val name: String,
+    val lastname: String,
+    val birthday: String,
+    val tel: String,
+    val isDone: Boolean
+)
 
 
 class MainActivity : AppCompatActivity() {
@@ -38,23 +37,42 @@ class MainActivity : AppCompatActivity() {
         val listSTR = list.map { todo: Todo -> todo.id }
         adapter = RecyclerAdapter(list) {
             // адаптеру передали обработчик удаления элемента
-            dbHelper.remove(it)
+            dbHelper.remove(list[it].id.toInt())
             list.removeAt(it)
             adapter.notifyItemRemoved(it)
         }
-
 
 
         val editText = findViewById<EditText>(R.id.editTextTextPersonName)
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
+        editText.doOnTextChanged { text, start, before, count ->
+            lifecycleScope.launch(Dispatchers.IO)
+            {
+                val glist = list.filter {
+                    (it.name.indexOf(text.toString()) != -1) || (it.lastname?.indexOf(text.toString()) != -1)
+                }
+                list?.clear()
+                if (glist.isEmpty()) {
+                } else {
+                    list.addAll(glist)
+                    withContext(Dispatchers.Main) {
+                        adapter.notifyDataSetChanged()
+                    }
+                }
 
-        val buttonAdd = findViewById<Button>(R.id.but_pl)
+            }
+        }
+        val buttonAdd = findViewById<Button>(R.id.but_add)
         buttonAdd.setOnClickListener {
-            val id = dbHelper.add(editText.text.toString(), "89132490223", "14.09.2003", "petrov" )
-            list.add(Todo(id, editText.text.toString(), "petrov", "14.09.2003", "89132490223", true))
-            adapter.notifyItemInserted(list.lastIndex)
+            val intent = Intent(this, MainActivity2::class.java)
+
+            startActivity(intent)
+            //           val id = dbHelper.add(editText.text.toString(), "89132490223", "14.09.2003", "petrov" )
+            //          list.removeAll(dbHelper.getAll())
+//            list.addAll(dbHelper.getAll())
+//           adapter.notifyItemInserted(list.lastIndex)
 
         }
 
@@ -67,8 +85,8 @@ class MainActivity : AppCompatActivity() {
 //
 //        }
 
-        }
-
     }
+
+}
 
 
